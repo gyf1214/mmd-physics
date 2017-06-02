@@ -1,5 +1,6 @@
 #include "mmd-physics/ik.hpp"
 #include "../ext.hpp"
+#include <glm/gtx/transform.hpp>
 
 using namespace std;
 using namespace glm;
@@ -10,7 +11,8 @@ namespace mmd {
             int size;
             vec3 origin, last;
             vector<float> extents;
-            vector<vec2> angles;
+            vector<vec2> angles, angles0;
+            vector<mat4> rotations;
             float alpha, eps;
 
             vec3 getDir(const vec2 &angle) {
@@ -52,6 +54,16 @@ namespace mmd {
                 } while (dot(diff, diff) >= eps);
             }
 
+            mat4 getRot(vec3 d0, vec3 d1) {
+                vec3 dd = cross(d0, d1);
+                vec3 norm;
+                if (length(dd) < 1e-8) {
+                    norm = vec3(1.0f, 0.0f, 0.0f);
+                } else {
+                    norm = normalize(dd);
+                }
+                return rotate(acos(dot(d0, d1)), normalize(cross(d0, d1)));
+            }
         public:
             Gradient(float alpha, float eps)
                 : size(0), alpha(alpha), eps(eps) {}
@@ -60,6 +72,7 @@ namespace mmd {
                 size = 0;
                 extents.clear();
                 angles.clear();
+                angles0.clear();
             }
 
             void pushBone(const vec3 &position) {
@@ -69,7 +82,9 @@ namespace mmd {
                     vec3 d = position - last;
                     last = position;
                     extents.push_back(length(d));
-                    angles.push_back(getAngle(normalize(d)));
+                    vec2 angle = getAngle(normalize(d));
+                    angles.push_back(angle);
+                    angles0.push_back(angle);
                 }
             }
 
@@ -83,15 +98,23 @@ namespace mmd {
                     forward();
                     loss = last - target;
                 }
+                rotations.clear();
+                mat4 acc(1.0f);
+                for (int i = 0; i < size - 1; ++i) {
+                    vec3 d0 = acc * vec4(getDir(angles0[i]), 0.0f);
+                    vec3 d1 = getDir(angles[i]);
+                    mat4 now = getRot(d0, d1);
+                    rotations.push_back(now);
+                    acc = acc * now;
+                }
+            }
+
+            mat4 getRotation(int index) {
+                return rotations[index];
             }
 
             vec3 getDirection(int index) {
                 return getDir(angles[index]);
-            }
-
-            mat4 getRotation(int index) {
-                // TODO
-                return mat4(1.0f);
             }
         };
 
