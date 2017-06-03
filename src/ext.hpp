@@ -2,10 +2,14 @@
 #define __EXT
 
 #include "mmd-physics/common.hpp"
+#include <glm/gtx/transform.hpp>
+#include "mmd/pmx.hpp"
+#include "mmd/vmd.hpp"
 
 using glm::vec2;
 using glm::vec3;
 using glm::vec4;
+using glm::mat4;
 
 inline std::ostream &operator <<(std::ostream &o, const vec2 &v) {
     o << "(" << v.x << ", " << v.y << ")";

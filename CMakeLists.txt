@@ -16,6 +16,3 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__FILENAME__='\"$(subst ${CMAKE_SOURCE
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -DNDEBUG -fvisibility=hidden")
 
 add_library(${LIB_TARGET} SHARED ${SRCS})
-add_executable(test_ik ${EXAMPLE_SRC}/ik.cc)
-
-target_link_libraries(test_ik ${LIB_TARGET})
