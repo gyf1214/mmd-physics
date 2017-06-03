@@ -6,13 +6,13 @@ using namespace mmd::physics;
 using namespace glm;
 
 int main() {
-    IK *ik = IK::gradient(0.01f, 1e-7);
+    IK *ik = IK::gradient(0.1f, 100);
 
-    vec3 t0 = vec3(0.0f, 0.0f, 0.0f);
-    vec3 t1 = vec3(0.0f, 1.0f, 0.0f);
-    vec3 t2 = vec3(0.0f, 2.0f, 0.0f);
+    vec3 t0 = vec3(-1.02279, 3.84852, 1.15599);
+    vec3 t1 = vec3(-0.836166, -0.784939, 0.986868);
+    vec3 t2 = vec3(-0.778207, -5.58021, 1.49155);
 
-    vec3 tt = vec3(0.5f, 0.5f, 0.0f);
+    vec3 tt = vec3(-0.378185, 1.91404, 0.0525511);
 
     ik->pushBone(t0);
     ik->pushBone(t1);

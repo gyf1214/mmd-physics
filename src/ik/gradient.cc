@@ -13,7 +13,8 @@ namespace mmd {
             vector<float> extents;
             vector<vec2> angles, angles0;
             vector<mat4> rotations;
-            float alpha, eps;
+            float alpha;
+            int loops;
 
             vec3 getDir(const vec2 &angle) {
                 return vec3(
@@ -25,14 +26,19 @@ namespace mmd {
 
             vec2 getAngle(const vec3 &direction) {
                 float pitch = asin(direction.z);
-                return vec2(acos(direction.x / cos(pitch)), pitch);
+                return vec2(atan2(direction.y, direction.x), pitch);
             }
 
             void forward() {
-                last = origin;
-                for (int i = 0; i < size - 1; ++i) {
-                    last += extents[i] * getDir(angles[i]);
+                last = origin + forward(0, size - 1);
+            }
+
+            vec3 forward(int s, int k) {
+                vec3 ret(0.0f, 0.0f, 0.0f);
+                for (int i = s; i < k; ++i) {
+                    ret += extents[i] * getDir(angles[i]);
                 }
+                return ret;
             }
 
             vec2 backward(int index, const vec3 &loss) {
@@ -45,13 +51,12 @@ namespace mmd {
             }
 
             void solveAngle(int index, const vec3 &target) {
-                vec2 diff;
-                do {
-                    forward();
-                    vec3 loss = last - target;
-                    diff = backward(index, loss);
-                    angles[index] -= alpha * diff;
-                } while (dot(diff, diff) >= eps);
+                vec3 t = target - forward(index + 1, size - 1);
+                vec3 p = origin + forward(0, index);
+                vec3 dir = normalize(t - p);
+                vec3 dir0 = getDirection(index);
+                dir = normalize(dir * alpha + dir0 * (1.0f - alpha));
+                angles[index] = getAngle(dir);
             }
 
             mat4 getRot(vec3 d0, vec3 d1) {
@@ -65,8 +70,8 @@ namespace mmd {
                 return rotate(acos(dot(d0, d1)), normalize(cross(d0, d1)));
             }
         public:
-            Gradient(float alpha, float eps)
-                : size(0), alpha(alpha), eps(eps) {}
+            Gradient(float alpha, int loops)
+                : size(0), alpha(alpha), loops(loops) {}
 
             void reset() {
                 size = 0;
@@ -76,6 +81,7 @@ namespace mmd {
             }
 
             void pushBone(const vec3 &position) {
+                LOG << position;
                 if (!size++) {
                     last = origin = position;
                 } else {
@@ -89,14 +95,17 @@ namespace mmd {
             }
 
             void solve(const vec3 &target) {
+                LOG << size;
+                LOG << target;
                 forward();
-                vec3 loss = last - target;
-                while (dot(loss, loss) >= eps) {
+                // vec3 loss = last - target;
+                for (int i = 0; i < loops; ++i) {
                     for (int i = 0; i < size - 1; ++i) {
                         solveAngle(i, target);
                     }
-                    forward();
-                    loss = last - target;
+                    // forward();
+                    // loss = last - target;
+                    // LOG << loss;
                 }
                 rotations.clear();
                 mat4 acc(1.0f);
@@ -118,8 +127,8 @@ namespace mmd {
             }
         };
 
-        IK *IK::gradient(float alpha, float eps) {
-            return new Gradient(alpha, eps);
+        IK *IK::gradient(float alpha, int loops) {
+            return new Gradient(alpha, loops);
         }
 
     } /* physics */

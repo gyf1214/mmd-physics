@@ -15,7 +15,7 @@ namespace mmd {
             virtual glm::vec3 getDirection(int index) = 0;
             virtual glm::mat4 getRotation(int index) = 0;
 
-            static IK *gradient(float alpha, float eps);
+            static IK *gradient(float alpha, int loops);
         };
 
     } /* physics */
