@@ -56,7 +56,7 @@ namespace mmd {
             }
 
         public:
-            void loadModel(pmx::Model *model) {
+            void loadModel(const pmx::Model *model) {
                 size = model->bones.size();
                 bones.resize(size);
                 for (int i = 0; i < size; ++i) {
@@ -77,6 +77,11 @@ namespace mmd {
             }
 
             void reset() {
+                size = 0;
+                bones.clear();
+            }
+
+            void resetPose() {
                 for (int i = 0; i < size; ++i) {
                     bones[i].transform = mat4(1.0f);
                 }

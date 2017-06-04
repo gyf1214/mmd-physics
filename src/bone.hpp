@@ -7,7 +7,7 @@ namespace mmd {
     namespace physics {
 
         struct Bone {
-            pmx::Bone *base;
+            const pmx::Bone *base;
             Bone *parent;
             mat4 transform, transition, invBone;
 

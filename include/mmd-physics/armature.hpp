@@ -10,7 +10,8 @@ namespace mmd {
         class MMDAPI Armature {
         public:
             virtual ~Armature();
-            virtual void loadModel(pmx::Model *model) = 0;
+            virtual void loadModel(const pmx::Model *model) = 0;
+            virtual void resetPose(void) = 0;
             virtual void reset(void) = 0;
             virtual void applyLocal(int index, const glm::mat4 &m) = 0;
             virtual void solveIK(void) = 0;
