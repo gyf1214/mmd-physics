@@ -49,7 +49,7 @@ namespace mmd {
                         remap[i] = &x->second;
                     }
                     LOG << "map " << tip << " " << i
-                        << " keyframes" << remap[i]->size();
+                        << " keyframes: " << (remap[i] ? remap[i]->size() : 0);
                 }
             }
 
