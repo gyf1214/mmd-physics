@@ -14,7 +14,6 @@ namespace mmd {
             virtual void reset(void) = 0;
             virtual void applyLocal(int index, const glm::mat4 &m) = 0;
             virtual void solveIK(void) = 0;
-            virtual int getSize(void) = 0;
             virtual glm::mat4 skin(int index) = 0;
 
             static Armature *create(void);

@@ -97,10 +97,6 @@ namespace mmd {
             mat4 skin(int index) {
                 return bones[index].skin();
             }
-
-            int getSize() {
-                return size;
-            }
         };
 
         Armature *Armature::create() {
