@@ -1,7 +1,6 @@
 #include "ext.hpp"
 #include "mmd-physics/armature.hpp"
 #include <glm/gtc/quaternion.hpp>
-#include "bone.hpp"
 
 using namespace glm;
 using namespace std;
@@ -10,6 +9,32 @@ static const float eps = 1e-5f;
 
 namespace mmd {
     namespace physics {
+
+        struct Bone {
+            const pmx::Bone *base;
+            Bone *parent;
+            mat4 transform, transition, invBone;
+
+            inline mat4 local() const {
+                return transition * transform;
+            }
+
+            mat4 global() const {
+                mat4 ret = local();
+                for (Bone *p = parent; p; p = p->parent) {
+                    ret = p->local() * ret;
+                }
+                return ret;
+            }
+
+            vec3 position() const {
+                return global()[3];
+            }
+
+            inline mat4 skin() const {
+                return global() * invBone;
+            }
+        };
 
         Armature::~Armature() {}
 
@@ -101,6 +126,10 @@ namespace mmd {
 
             mat4 skin(int index) {
                 return bones[index].skin();
+            }
+
+            mat4 global(int index) {
+                return bones[index].global();
             }
         };
 
