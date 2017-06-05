@@ -16,3 +16,6 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__FILENAME__='\"$(subst ${CMAKE_SOURCE
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -DNDEBUG -fvisibility=hidden")
 
 add_library(${LIB_TARGET} SHARED ${SRCS})
+
+find_package(Bullet REQUIRED)
+target_link_libraries(${LIB_TARGET} ${BULLET_LIBRARIES})

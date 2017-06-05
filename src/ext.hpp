@@ -3,6 +3,7 @@
 
 #include "mmd-physics/common.hpp"
 #include <glm/gtx/transform.hpp>
+#include <bullet/btBulletDynamicsCommon.h>
 #include "mmd/pmx.hpp"
 #include "mmd/vmd.hpp"
 
