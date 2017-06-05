@@ -19,3 +19,4 @@ add_library(${LIB_TARGET} SHARED ${SRCS})
 
 find_package(Bullet REQUIRED)
 target_link_libraries(${LIB_TARGET} ${BULLET_LIBRARIES})
+include_directories(${BULLET_INCLUDE_DIRS})
