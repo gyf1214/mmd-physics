@@ -146,12 +146,12 @@ namespace mmd {
                 world.reset();
             }
 
-            void loadModel(const pmx::Model *model) {
-                this->model = model;
-                int n = model->rigids.size();
+            void loadModel(const pmx::Model *m) {
+                model = m;
+                int n = m->rigids.size();
                 rigids.resize(n);
                 for (int i = 0; i < n; ++i) {
-                    rigids[i].load(model, i);
+                    rigids[i].load(m, i);
                     int group = 1 << ((int)rigids[i].base->group);
                     int mask = (int)rigids[i].base->mask;
                     world.base->addRigidBody(rigids[i].bt, group, mask);
