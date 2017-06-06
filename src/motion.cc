@@ -1,6 +1,7 @@
 #include "ext.hpp"
 #include "mmd-physics/motion.hpp"
 #include "mmd-physics/armature.hpp"
+#include "mmd-physics/body.hpp"
 #include <glm/gtc/quaternion.hpp>
 
 using namespace std;
@@ -15,6 +16,7 @@ namespace mmd {
             const pmx::Model *model;
             const vmd::Motion *motion;
             Armature *armature;
+            Body *body;
 
             vector<const vector<vmd::Keyframe*>*> boneRemap;
             vector<const vector<vmd::Face*>*> faceRemap;
@@ -118,16 +120,21 @@ namespace mmd {
 
         public:
             MotionImp() : model(NULL), motion(NULL),
-                          armature(Armature::create()) {}
+                          armature(Armature::create()),
+                          body(Body::create()) {
+                body->bindArmature(armature);
+            }
 
             ~MotionImp() {
                 delete armature;
+                delete body;
             }
 
             void loadModel(const pmx::Model *m) {
                 if (!model) resetModel();
                 model = m;
                 armature->loadModel(m);
+                body->loadModel(m);
                 morph.resize(m->morphs.size(), 0);
                 if (motion) remap();
             }
@@ -140,6 +147,7 @@ namespace mmd {
 
             void resetPose() {
                 armature->resetPose();
+                body->resetPose();
                 morph.assign(model->morphs.size(), 0);
             }
 
@@ -151,6 +159,7 @@ namespace mmd {
             void resetModel() {
                 unmap();
                 armature->reset();
+                body->reset();
                 morph.clear();
                 model = NULL;
             }
@@ -158,6 +167,8 @@ namespace mmd {
             void reset() {
                 unmap();
                 armature->reset();
+                body->reset();
+                morph.clear();
                 model = NULL;
                 motion = NULL;
             }
@@ -177,6 +188,10 @@ namespace mmd {
                     morph[i] = getFrame(faceRemap[i], frame,
                                         toFloat, interFace, 0.0f);
                 }
+            }
+
+            void updatePhysics(float tick) {
+                body->update(tick);
             }
 
             mat4 skin(int index) {

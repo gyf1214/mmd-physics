@@ -20,6 +20,7 @@ namespace mmd {
             virtual void reset(void) = 0;
 
             virtual void updateKey(int frame) = 0;
+            virtual void updatePhysics(float tick) = 0;
 
             virtual glm::mat4 skin(int index) = 0;
             virtual float face(int index) = 0;
