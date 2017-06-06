@@ -7,6 +7,10 @@ using namespace glm;
 
 namespace mmd {
     namespace physics {
+        static const double gravity = 9.80665*20/1.58;
+        static const int maxSubstep = 10;
+        static const float frequency = 1.0f / 120.0f;
+
         inline btVector3 gl2bt(const vec3 &v) {
             return btVector3(v[0], v[1], v[2]);
         }
@@ -43,7 +47,7 @@ namespace mmd {
             btCollisionShape *shape;
             btMotionState *motion;
 
-            mat4 w0, s0i, ti;
+            mat4 W0, S0i, Ti;
 
             Rigid() : bt(NULL), shape(NULL), motion(NULL) {}
 
@@ -61,7 +65,7 @@ namespace mmd {
                 }
 
                 btVector3 inert(0.0f, 0.0f, 0.0f);
-                motion = new btDefaultMotionState(gl2bt(w0));
+                motion = new btDefaultMotionState(gl2bt(W0));
                 bool kinematic = !base->mode;
                 float mass = kinematic ? 0.0f : base->mass;
                 if (mass > 0) shape->calculateLocalInertia(mass, inert);
@@ -80,16 +84,16 @@ namespace mmd {
             void load(const pmx::Model *model, int index) {
                 base = &model->rigids[index];
 
-                w0 = translate(base->position) * mat4_cast(quat(base->rotation));
+                W0 = translate(base->position) * mat4_cast(quat(base->rotation));
                 if (base->bone >= 0) {
                     const auto &bone = model->bones[base->bone];
                     vec3 p = -bone.position;
                     if (bone.parent >= 0) p += model->bones[bone.parent].position;
-                    ti = translate(p);
-                    s0i = inverse(w0) * translate(bone.position);
+                    Ti = translate(p);
+                    S0i = inverse(W0) * translate(bone.position);
                 } else {
-                    ti = mat4(1.0f);
-                    s0i = inverse(w0);
+                    Ti = mat4(1.0f);
+                    S0i = inverse(W0);
                 }
 
                 createRigid();
@@ -105,6 +109,7 @@ namespace mmd {
         Body::~Body() {}
 
         class BodyImp : public Body {
+            const pmx::Model *model;
             std::vector<Rigid> rigids;
             Armature *armature;
 
@@ -122,6 +127,7 @@ namespace mmd {
                     solver = new btSequentialImpulseConstraintSolver();
                     base = new btDiscreteDynamicsWorld(dispatcher, cache,
                                                        solver, config);
+                    base->setGravity(btVector3(0.0f, -gravity, 0.0f));
                 }
 
                 void reset() {
@@ -141,6 +147,7 @@ namespace mmd {
             }
 
             void loadModel(const pmx::Model *model) {
+                this->model = model;
                 int n = model->rigids.size();
                 rigids.resize(n);
                 for (int i = 0; i < n; ++i) {
@@ -162,6 +169,52 @@ namespace mmd {
                     rigids[i].reset();
                 }
                 rigids.clear();
+            }
+
+            void resetPose() {
+                int n = rigids.size();
+                for (int i = 0; i < n; ++i) {
+                    rigids[i].bt->clearForces();
+                    rigids[i].motion->setWorldTransform(gl2bt(rigids[i].W0));
+                }
+            }
+
+            void applyBone() {
+                int n = rigids.size();
+                for (int i = 0; i < n; ++i) {
+                    int bone = rigids[i].base->bone;
+                    if (bone >= 0 && !rigids[i].base->mode) {
+                        mat4 w = armature->skin(bone) * rigids[i].W0;
+                        rigids[i].motion->setWorldTransform(gl2bt(w));
+                    }
+                }
+            }
+
+            void stepSimulation(float tick) {
+                world.base->stepSimulation(tick, maxSubstep, frequency);
+            }
+
+            void updateBone() {
+                int n = rigids.size();
+                for (int i = 0; i < n; ++i) {
+                    int bone = rigids[i].base->bone;
+                    if (bone >= 0 && rigids[i].base->mode) {
+                        btTransform Wt;
+                        rigids[i].motion->getWorldTransform(Wt);
+                        mat4 W = bt2gl(Wt);
+                        mat4 Pi(1.0f);
+                        int p = model->bones[bone].parent;
+                        if (p >= 0) Pi = inverse(armature->global(p));
+                        mat4 L = rigids[i].Ti * Pi * W * rigids[i].S0i;
+                        armature->applyLocal(bone, L);
+                    }
+                }
+            }
+
+            void update(float tick) {
+                applyBone();
+                stepSimulation(tick);
+                updateBone();
             }
         };
 

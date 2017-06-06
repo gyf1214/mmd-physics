@@ -12,7 +12,12 @@ namespace mmd {
             virtual ~Body();
             virtual void loadModel(const pmx::Model *model) = 0;
             virtual void bindArmature(Armature *armature) = 0;
-            virtual void reset() = 0;
+            virtual void reset(void) = 0;
+            virtual void resetPose(void) = 0;
+            virtual void applyBone(void) = 0;
+            virtual void stepSimulation(float tick) = 0;
+            virtual void updateBone(void) = 0;
+            virtual void update(float tick) = 0;
 
             static Body *create(void);
         };
