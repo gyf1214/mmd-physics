@@ -126,6 +126,7 @@ namespace mmd {
             }
 
             ~MotionImp() {
+                reset();
                 delete armature;
                 delete body;
             }

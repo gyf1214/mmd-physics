@@ -9,7 +9,7 @@ namespace mmd {
     namespace physics {
         static const double gravity = 9.80665*20/1.58;
         static const int maxSubstep = 10;
-        static const float frequency = 1.0f / 120.0f;
+        static const float frequency = 1.0f / 300.0f;
 
         inline btVector3 gl2bt(const vec3 &v) {
             return btVector3(v[0], v[1], v[2]);
@@ -39,6 +39,10 @@ namespace mmd {
             );
 
             return btTransform(basis, btVector3(m[3][0], m[3][1], m[3][2]));
+        }
+
+        inline mat4 mmd2gl(const vec3 &pos, const vec3 &rot) {
+            return translate(pos) * mat4_cast(quat(rot));
         }
 
         struct Rigid {
@@ -84,7 +88,7 @@ namespace mmd {
             void load(const pmx::Model *model, int index) {
                 base = &model->rigids[index];
 
-                W0 = translate(base->position) * mat4_cast(quat(base->rotation));
+                W0 = mmd2gl(base->position, base->rotation);
                 if (base->bone >= 0) {
                     const auto &bone = model->bones[base->bone];
                     vec3 p = -bone.position;
@@ -110,7 +114,8 @@ namespace mmd {
 
         class BodyImp : public Body {
             const pmx::Model *model;
-            std::vector<Rigid> rigids;
+            vector<Rigid> rigids;
+            vector<btTypedConstraint *> joints;
             Armature *armature;
 
             struct {
@@ -156,6 +161,44 @@ namespace mmd {
                     int mask = (int)rigids[i].base->mask;
                     world.base->addRigidBody(rigids[i].bt, group, mask);
                 }
+                n = m->joints.size();
+                joints.resize(n);
+                for (int i = 0; i < n; ++i) {
+                    const auto &joint = m->joints[i];
+                    mat4 W = mmd2gl(joint.position, joint.rotation);
+                    mat4 a = inverse(rigids[joint.rigidA].W0) * W;
+                    btGeneric6DofSpring2Constraint *j;
+                    if (joint.rigidB >= 0) {
+                        mat4 b = inverse(rigids[joint.rigidB].W0) * W;
+                        j = new btGeneric6DofSpring2Constraint(
+                            *(rigids[joint.rigidA].bt),
+                            *(rigids[joint.rigidB].bt),
+                            gl2bt(a), gl2bt(b)
+                        );
+                    } else {
+                        j = new btGeneric6DofSpring2Constraint(
+                            *(rigids[joint.rigidA].bt), gl2bt(a)
+                        );
+                    }
+                    j->setLinearLowerLimit(gl2bt(joint.posMin));
+                    j->setLinearUpperLimit(gl2bt(joint.posMax));
+                    j->setAngularLowerLimit(gl2bt(joint.rotMin));
+                    j->setAngularUpperLimit(gl2bt(joint.rotMax));
+                    const vec3 &ps = joint.posSpring;
+                    const vec3 &rs = joint.rotSpring;
+                    float s[] = {
+                        ps[0], ps[1], ps[2],
+                        rs[0], rs[1], rs[2]
+                    };
+                    for (int k = 0; k < 6; ++k) {
+                        if (s[k] > 0.0f) {
+                            j->enableSpring(k, true);
+                            j->setStiffness(k, s[k]);
+                        }
+                    }
+                    world.base->addConstraint(j);
+                    joints[i] = j;
+                }
             }
 
             void bindArmature(Armature *armature) {
@@ -169,6 +212,12 @@ namespace mmd {
                     rigids[i].reset();
                 }
                 rigids.clear();
+                n = joints.size();
+                for (int i = 0; i < n; ++i) {
+                    world.base->removeConstraint(joints[i]);
+                    delete joints[i];
+                }
+                joints.clear();
             }
 
             void resetPose() {
