@@ -99,7 +99,7 @@ namespace mmd {
             }
 
             template <class T, class U, class P, class Q>
-            Q getFrame(const T *remap, int frame,
+            Q getFrame(const T *remap, float frame,
                        U trans, P inter, const Q &def) {
 
                 auto res = bisect(remap, frame);
@@ -109,8 +109,8 @@ namespace mmd {
                         return trans(l);
                     } else {
                         const auto &r = *(*remap)[res.second];
-                        float s = (float)(frame - l.frame) /
-                                  (float)(r.frame - l.frame);
+                        float s = (frame - (float)l.frame) /
+                                  ((float)r.frame - (float)l.frame);
                         return inter(l, r, s);
                     }
                 } else {
@@ -146,6 +146,10 @@ namespace mmd {
                 if (model) remap();
             }
 
+            void resetPhysics() {
+                body->resetPose();
+            }
+
             void resetPose() {
                 armature->resetPose();
                 body->resetPose();
@@ -174,7 +178,11 @@ namespace mmd {
                 motion = NULL;
             }
 
-            void updateKey(int frame) {
+            void updateGlobal(const mat4 &m) {
+                body->applyGlobal(m);
+            }
+
+            void updateKey(float frame) {
                 int n = boneRemap.size();
                 for (int i = 0; i < n; ++i) {
                     mat4 trans = getFrame(boneRemap[i], frame,

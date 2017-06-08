@@ -14,12 +14,14 @@ namespace mmd {
             virtual void loadModel(const pmx::Model *model) = 0;
             virtual void loadMotion(const vmd::Motion *motion) = 0;
 
+            virtual void resetPhysics(void) = 0;
             virtual void resetPose(void) = 0;
             virtual void resetMotion(void) = 0;
             virtual void resetModel(void) = 0;
             virtual void reset(void) = 0;
 
-            virtual void updateKey(int frame) = 0;
+            virtual void updateGlobal(const glm::mat4 &m) = 0;
+            virtual void updateKey(float frame) = 0;
             virtual void updatePhysics(float tick) = 0;
 
             virtual glm::mat4 skin(int index) = 0;

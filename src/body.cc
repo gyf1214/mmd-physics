@@ -117,6 +117,7 @@ namespace mmd {
             vector<Rigid> rigids;
             vector<btTypedConstraint *> joints;
             Armature *armature;
+            mat4 mMat;
 
             struct {
                 btDiscreteDynamicsWorld *base;
@@ -144,7 +145,10 @@ namespace mmd {
                 }
             } world;
         public:
-            BodyImp() { world.setup(); }
+            BodyImp() {
+                mMat = mat4(1.0f);
+                world.setup();
+            }
 
             ~BodyImp() {
                 reset();
@@ -223,8 +227,12 @@ namespace mmd {
             void resetPose() {
                 int n = rigids.size();
                 for (int i = 0; i < n; ++i) {
-                    rigids[i].bt->clearForces();
-                    rigids[i].motion->setWorldTransform(gl2bt(rigids[i].W0));
+                    int bone = rigids[i].base->bone;
+                    if (bone >= 0 && rigids[i].base->mode) {
+                        armature->applyLocal(bone, mat4(1.0f));
+                        mat4 w = mMat * armature->skin(bone) * rigids[i].W0;
+                        rigids[i].motion->setWorldTransform(gl2bt(w));
+                    }
                 }
             }
 
@@ -233,10 +241,14 @@ namespace mmd {
                 for (int i = 0; i < n; ++i) {
                     int bone = rigids[i].base->bone;
                     if (bone >= 0 && !rigids[i].base->mode) {
-                        mat4 w = armature->skin(bone) * rigids[i].W0;
+                        mat4 w = mMat * armature->skin(bone) * rigids[i].W0;
                         rigids[i].motion->setWorldTransform(gl2bt(w));
                     }
                 }
+            }
+
+            void applyGlobal(const mat4 &m) {
+                mMat = m;
             }
 
             void stepSimulation(float tick) {
@@ -254,7 +266,7 @@ namespace mmd {
                         mat4 Pi(1.0f);
                         int p = model->bones[bone].parent;
                         if (p >= 0) Pi = inverse(armature->global(p));
-                        mat4 L = rigids[i].Ti * Pi * W * rigids[i].S0i;
+                        mat4 L = rigids[i].Ti * Pi * inverse(mMat) * W * rigids[i].S0i;
                         armature->applyLocal(bone, L);
                     }
                 }
@@ -262,7 +274,12 @@ namespace mmd {
 
             void update(float tick) {
                 applyBone();
+                btTransform t;
+                rigids[23].motion->getWorldTransform(t);
+                LOG << bt2gl(t.getOrigin());
                 stepSimulation(tick);
+                rigids[23].motion->getWorldTransform(t);
+                LOG << bt2gl(t.getOrigin());
                 updateBone();
             }
         };
