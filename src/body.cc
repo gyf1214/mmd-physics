@@ -5,12 +5,12 @@
 using namespace std;
 using namespace glm;
 
+static const double gravity = 9.80665*20/1.58;
+static const int maxSubstep = 10;
+static const float frequency = 1.0f / 300.0f;
+
 namespace mmd {
     namespace physics {
-        static const double gravity = 9.80665*20/1.58;
-        static const int maxSubstep = 10;
-        static const float frequency = 1.0f / 300.0f;
-
         inline btVector3 gl2bt(const vec3 &v) {
             return btVector3(v[0], v[1], v[2]);
         }
