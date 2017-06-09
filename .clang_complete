@@ -1,3 +1,4 @@
 -Iinclude
+-I../mmd-tools/include
 -I/usr/local/include/bullet
 -std=c++11
