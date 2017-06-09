@@ -55,7 +55,7 @@ namespace mmd {
 
             Rigid() : bt(NULL), shape(NULL), motion(NULL) {}
 
-            void createRigid() {
+            void createRigid(mat4 mMat, Armature *armature) {
                 switch (base->shape) {
                     case pmx::Rigid::RigidBox:
                     shape = new btBoxShape(gl2bt(base->size / 2.0f));
@@ -69,7 +69,13 @@ namespace mmd {
                 }
 
                 btVector3 inert(0.0f, 0.0f, 0.0f);
-                motion = new btDefaultMotionState(gl2bt(W0));
+                mat4 w;
+                if (base->bone >= 0) {
+                    w = mMat * armature->skin(base->bone) * W0;
+                } else {
+                    w = mMat * W0;
+                }
+                motion = new btDefaultMotionState(gl2bt(w));
                 bool kinematic = !base->mode;
                 float mass = kinematic ? 0.0f : base->mass;
                 if (mass > 0) shape->calculateLocalInertia(mass, inert);
@@ -99,8 +105,6 @@ namespace mmd {
                     Ti = mat4(1.0f);
                     S0i = inverse(W0);
                 }
-
-                createRigid();
             }
 
             void reset() {
@@ -161,6 +165,7 @@ namespace mmd {
                 rigids.resize(n);
                 for (int i = 0; i < n; ++i) {
                     rigids[i].load(m, i);
+                    rigids[i].createRigid(mMat, armature);
                     int group = 1 << ((int)rigids[i].base->group);
                     int mask = (int)rigids[i].base->mask;
                     world.base->addRigidBody(rigids[i].bt, group, mask);
@@ -225,15 +230,11 @@ namespace mmd {
             }
 
             void resetPose() {
-                int n = rigids.size();
-                for (int i = 0; i < n; ++i) {
-                    int bone = rigids[i].base->bone;
-                    if (bone >= 0 && rigids[i].base->mode) {
-                        armature->applyLocal(bone, mat4(1.0f));
-                        mat4 w = mMat * armature->skin(bone) * rigids[i].W0;
-                        rigids[i].motion->setWorldTransform(gl2bt(w));
-                    }
-                }
+                reset();
+                world.reset();
+                world.setup();
+
+                loadModel(model);
             }
 
             void applyBone() {
@@ -274,12 +275,7 @@ namespace mmd {
 
             void update(float tick) {
                 applyBone();
-                btTransform t;
-                rigids[23].motion->getWorldTransform(t);
-                LOG << bt2gl(t.getOrigin());
                 stepSimulation(tick);
-                rigids[23].motion->getWorldTransform(t);
-                LOG << bt2gl(t.getOrigin());
                 updateBone();
             }
         };
