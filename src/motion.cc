@@ -57,7 +57,6 @@ namespace mmd {
             }
 
             void remap() {
-                resetPose();
                 remap(model->bones, motion->bones, boneRemap, "bone");
                 remap(model->morphs, motion->faces, faceRemap, "face");
             }
@@ -133,7 +132,7 @@ namespace mmd {
             }
 
             void loadModel(const pmx::Model *m) {
-                if (!model) resetModel();
+                if (model) resetModel();
                 model = m;
                 armature->loadModel(m);
                 body->loadModel(m);
@@ -142,7 +141,8 @@ namespace mmd {
             }
 
             void loadMotion(const vmd::Motion *m) {
-                if (!motion) resetMotion();
+                LOG << "load motion";
+                if (motion) resetMotion();
                 motion = m;
                 if (model) remap();
             }
@@ -159,6 +159,7 @@ namespace mmd {
 
             void resetMotion() {
                 unmap();
+                resetPose();
                 motion = NULL;
             }
 

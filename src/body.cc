@@ -215,18 +215,18 @@ namespace mmd {
             }
 
             void reset() {
-                int n = rigids.size();
-                for (int i = 0; i < n; ++i) {
-                    world.base->removeRigidBody(rigids[i].bt);
-                    rigids[i].reset();
-                }
-                rigids.clear();
-                n = joints.size();
+                int n = joints.size();
                 for (int i = 0; i < n; ++i) {
                     world.base->removeConstraint(joints[i]);
                     delete joints[i];
                 }
                 joints.clear();
+                n = rigids.size();
+                for (int i = 0; i < n; ++i) {
+                    world.base->removeRigidBody(rigids[i].bt);
+                    rigids[i].reset();
+                }
+                rigids.clear();
             }
 
             void resetPose() {
