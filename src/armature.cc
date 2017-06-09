@@ -50,7 +50,8 @@ namespace mmd {
                 vec3 targetPos = ikBone.position();
 
                 for (int i = 0; i < ik.loopCount; ++i) {
-                    for (int u = 0; u < ik.links.size(); ++u) {
+                    int ikSize = ik.links.size();
+                    for (int u = 0; u < ikSize; ++u) {
                         const auto &link = ik.links[u];
                         CHECK(link.bone >= 0 && link.bone < size)
                             << "invalid ik link!";

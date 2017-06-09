@@ -26,7 +26,8 @@ namespace mmd {
             pair<int, int> bisect(const T *remap, int frame) {
                 if (!remap) return make_pair(-1, -1);
                 const T &keys = *remap;
-                int l = 0, r = keys.size();
+                int size = keys.size();
+                int l = 0, r = size;
                 if (!r) return make_pair(-1, -1);
 
                 while (r - l > 1) {
@@ -38,7 +39,7 @@ namespace mmd {
                     }
                 }
 
-                return r < keys.size() ? make_pair(l, r) : make_pair(l, l);
+                return r < size ? make_pair(l, r) : make_pair(l, l);
             }
 
             template <class T, class U, class P>
