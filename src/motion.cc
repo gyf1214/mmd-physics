@@ -152,6 +152,7 @@ namespace mmd {
             }
 
             void resetPose() {
+                if (!model) return;
                 armature->resetPose();
                 body->resetPose();
                 morph.assign(model->morphs.size(), 0);

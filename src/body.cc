@@ -230,6 +230,7 @@ namespace mmd {
             }
 
             void resetPose() {
+                if (!model) return;
                 reset();
                 world.reset();
                 world.setup();
