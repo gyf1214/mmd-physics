@@ -135,9 +135,12 @@ namespace mmd {
                 if (model) resetModel();
                 model = m;
                 armature->loadModel(m);
-                body->loadModel(m);
                 morph.resize(m->morphs.size(), 0);
                 if (motion) remap();
+            }
+
+            void loadBody() {
+                body->loadModel(model);
             }
 
             void loadMotion(const vmd::Motion *m) {

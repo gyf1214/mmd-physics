@@ -13,6 +13,7 @@ namespace mmd {
             virtual ~Motion();
             virtual void loadModel(const pmx::Model *model) = 0;
             virtual void loadMotion(const vmd::Motion *motion) = 0;
+            virtual void loadBody(void) = 0;
 
             virtual void resetPhysics(void) = 0;
             virtual void resetPose(void) = 0;
