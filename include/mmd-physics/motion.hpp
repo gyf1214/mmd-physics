@@ -28,7 +28,9 @@ namespace mmd {
             virtual glm::mat4 skin(int index) = 0;
             virtual float face(int index) = 0;
 
-            static Motion *create(void);
+            virtual const std::vector<glm::vec3> &getDebugLines(void) = 0;
+
+            static Motion *create(bool debug = false);
         };
 
     } /* physics */

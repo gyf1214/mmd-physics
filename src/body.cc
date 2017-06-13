@@ -116,12 +116,17 @@ namespace mmd {
 
         Body::~Body() {}
 
-        class BodyImp : public Body {
+        class BodyImp : public Body, public btIDebugDraw {
             const pmx::Model *model;
             vector<Rigid> rigids;
             vector<btTypedConstraint *> joints;
             Armature *armature;
             mat4 mMat;
+
+            int debugMode;
+            vector<vec3> lines;
+
+            bool debug;
 
             struct {
                 btDiscreteDynamicsWorld *base;
@@ -149,7 +154,7 @@ namespace mmd {
                 }
             } world;
         public:
-            BodyImp() {
+            BodyImp(bool debug) : debug(debug) {
                 mMat = mat4(1.0f);
                 world.setup();
             }
@@ -157,6 +162,37 @@ namespace mmd {
             ~BodyImp() {
                 reset();
                 world.reset();
+            }
+
+            void drawLine(const btVector3 &from, const btVector3 &to,
+                          const btVector3 &color) {
+                lines.push_back(bt2gl(from));
+                lines.push_back(bt2gl(color));
+                lines.push_back(bt2gl(to));
+                lines.push_back(bt2gl(color));
+            }
+
+            void drawContactPoint(const btVector3 &pointOnB, const btVector3 &normalOnB,
+                                  btScalar distance, int lifeTime, const btVector3 &color)
+            {}
+
+            void reportErrorWarning(const char *warning) {
+                LOG << "bullet warning: " << warning;
+            }
+
+            virtual void draw3dText(const btVector3 &location,
+                                    const char *textString) {}
+
+            void setDebugMode(int mode) {
+                debugMode = mode;
+            }
+
+            int getDebugMode() const {
+                return debugMode;
+            }
+
+            const std::vector<glm::vec3> &getDebugLines() {
+                return lines;
             }
 
             void loadModel(const pmx::Model *m) {
@@ -207,6 +243,11 @@ namespace mmd {
                     }
                     world.base->addConstraint(j);
                     joints[i] = j;
+                }
+                if (debug) {
+                    world.base->setDebugDrawer(this);
+                    world.base->getDebugDrawer()
+                              ->setDebugMode(btIDebugDraw::DBG_DrawWireframe);
                 }
             }
 
@@ -275,14 +316,18 @@ namespace mmd {
             }
 
             void update(float tick) {
+                if (debug) {
+                    lines.clear();
+                    world.base->debugDrawWorld();
+                }
                 applyBone();
                 stepSimulation(tick);
                 updateBone();
             }
         };
 
-        Body *Body::create() {
-            return new BodyImp();
+        Body *Body::create(bool debug) {
+            return new BodyImp(debug);
         }
 
     } /* physics */

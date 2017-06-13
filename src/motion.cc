@@ -119,9 +119,9 @@ namespace mmd {
             }
 
         public:
-            MotionImp() : model(NULL), motion(NULL),
+            MotionImp(bool debug) : model(NULL), motion(NULL),
                           armature(Armature::create()),
-                          body(Body::create()) {
+                          body(Body::create(debug)) {
                 body->bindArmature(armature);
             }
 
@@ -216,10 +216,14 @@ namespace mmd {
             float face(int index) {
                 return morph[index];
             }
+
+            const std::vector<glm::vec3> &getDebugLines() {
+                return body->getDebugLines();
+            }
         };
 
-        Motion *Motion::create() {
-            return new MotionImp();
+        Motion *Motion::create(bool debug) {
+            return new MotionImp(debug);
         }
 
     } /* physics */

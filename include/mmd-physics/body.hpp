@@ -20,7 +20,9 @@ namespace mmd {
             virtual void updateBone(void) = 0;
             virtual void update(float tick) = 0;
 
-            static Body *create(void);
+            virtual const std::vector<glm::vec3> &getDebugLines(void) = 0;
+
+            static Body *create(bool debug = false);
         };
 
     } /* physics */
